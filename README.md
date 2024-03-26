@@ -199,5 +199,5 @@ Model accuracy and speed under inference of the test set with batch size of 32:
 * NVIDIA TensorRT stands out as the sole framework offering INT8 quantization for GPU inference. The recovery performance is notably impressive, with 99.5% of the original accuracy. The marginal loss in accuracy is likely to be inconsequential for most applications.
 
 * The speed improvement of TensorRT INT8 over TensorRT FP16 is approximately 6%. This could potentially be due to many layers reverting to FP16 computation.
-
+# interesting
 * ONNX Runtime emerges as a viable alternative for accelerated GPU inference. Although it may not surpass TensorRT in terms of speed, it does provide an option for CPU inference. For GPU inference, TensorRT would probably be the preferred choice for most applications given its superior speed and high recovery.
