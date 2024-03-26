@@ -201,3 +201,5 @@ Model accuracy and speed under inference of the test set with batch size of 32:
 * The speed improvement of TensorRT INT8 over TensorRT FP16 is approximately 6%. This could potentially be due to many layers reverting to FP16 computation.
 # interesting
 * ONNX Runtime emerges as a viable alternative for accelerated GPU inference. Although it may not surpass TensorRT in terms of speed, it does provide an option for CPU inference. For GPU inference, TensorRT would probably be the preferred choice for most applications given its superior speed and high recovery.
+
+# Creating a new branch is quich AND easy.
