@@ -38,7 +38,7 @@ class BertConfig:
     return_pooler_output: bool = False
     
 
-class BertEmbeddings(nn.Module):
+class BertEmbeddings(nn.Module): # 实现输入
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -62,7 +62,7 @@ class BertEmbeddings(nn.Module):
         return emb
     
     
-class BertSelfAttention(nn.Module):
+class BertSelfAttention(nn.Module):# self-attention 一个head的
     def __init__(self, config, layer_i):
         super().__init__()
         self.config = config
@@ -107,7 +107,7 @@ class BertSelfAttention(nn.Module):
         return emb_rich
 
 
-class BertSelfOutput(nn.Module):
+class BertSelfOutput(nn.Module):# 我觉得是将self-attention得到的softmax乘上value的公式结果，经过一个ffnn，加上残差链接最后layernorm
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.emb_size, config.emb_size)
@@ -122,7 +122,7 @@ class BertSelfOutput(nn.Module):
         return out
 
 
-class BertAttention(nn.Module):
+class BertAttention(nn.Module):# 把上述两个模块：bertselfattention和bertselfoutput结合起来
     def __init__(self, config, layer_i):
         super().__init__()
         self.self = BertSelfAttention(config, layer_i)
@@ -134,7 +134,7 @@ class BertAttention(nn.Module):
         return out
 
 
-class BertIntermediate(nn.Module):
+class BertIntermediate(nn.Module):# 承接上个模块bertattention的输出put
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.emb_size, config.intermediate_size)
@@ -146,7 +146,7 @@ class BertIntermediate(nn.Module):
         return out
 
 
-class BertOutput(nn.Module):
+class BertOutput(nn.Module):# 整个模型的输出层
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.intermediate_size, config.emb_size)
@@ -161,7 +161,7 @@ class BertOutput(nn.Module):
         return out 
 
 
-class BertLayer(nn.Module):
+class BertLayer(nn.Module):# 将上述的attention部分，intermediate部分和output部分结合在一起作为一个encoder层
     def __init__(self, config, layer_i):
         super().__init__()
         self.attention = BertAttention(config, layer_i)
@@ -175,7 +175,7 @@ class BertLayer(nn.Module):
         return out
 
 
-class BertEncoder(nn.Module):
+class BertEncoder(nn.Module):# 多个encoder层结合起来成为一个大的bertencoder
     def __init__(self, config):
         super().__init__()
         self.layer = nn.ModuleList([BertLayer(config, layer_i) for layer_i in range(config.n_layers)])
@@ -187,6 +187,9 @@ class BertEncoder(nn.Module):
 
 
 class BertPooler(nn.Module):
+# 定义了一个简单的池化层模型，用于从编码器的输出中提取第一个标记的表示，
+# 并通过线性变换和tanh激活函数得到最终的表示。
+# 这样的池化层通常用于将编码器的输出转换为固定长度的表示，以供后续的任务或模型使用。
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.emb_size, config.emb_size)
@@ -199,7 +202,7 @@ class BertPooler(nn.Module):
         return out
 
 
-class BertModel(nn.Module):
+class BertModel(nn.Module):# 整个bert
     def __init__(self, config):
         super().__init__()
         self.embeddings = BertEmbeddings(config)
@@ -213,7 +216,7 @@ class BertModel(nn.Module):
         return out, pooled_out
 
 
-class BertForSequenceClassification(nn.Module):
+class BertForSequenceClassification(nn.Module):# 为了分类任务而微调一下子
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -231,7 +234,7 @@ class BertForSequenceClassification(nn.Module):
             return pooled_out, logits        
         return logits
      
-    def reduce_seq_len(self, seq_len):
+    def reduce_seq_len(self, seq_len):# 将BERT模型的最大序列长度缩减到更小的长度
         """
         Reduces the accepted sequence length of the inputs into the model.
             e.g. BERT normally accepts a maximum of 512 tokens. This can be reduced to a lesser number of tokens
@@ -243,11 +246,12 @@ class BertForSequenceClassification(nn.Module):
         assert seq_len <= self.config.max_seq_length, f"Sequence length must be reduced below current length of {self.config.max_seq_length}"
         self.bert.embeddings.position_embeddings.weight = nn.Parameter(self.bert.embeddings.position_embeddings.weight[:seq_len])
         self.bert.embeddings.position_ids = self.bert.embeddings.position_ids[:, :seq_len]
+        # register_buffer里面有position_ids
         print(f"Sequence length successfully reduced to {seq_len}.")
         self.config.max_seq_length = seq_len
         
     @staticmethod
-    def adaptive_copy(orig_wei, new_wei):
+    def adaptive_copy(orig_wei, new_wei):# 根据权重张量的维度，将预训练模型的权重适应性地复制到自定义模型中
         """
         Copies the new weights from the pretrained model into the custom model. 
         If the dimensions of the new weights are larger then it only copies the 
