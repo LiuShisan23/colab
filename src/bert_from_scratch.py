@@ -86,6 +86,18 @@ class BertSelfAttention(nn.Module):
         if att_mask != None:
             att_mask = (att_mask > 0).unsqueeze(1).repeat(1, att_mask.size(1), 1).unsqueeze(1)
             weights = weights.masked_fill(att_mask == 0, float('-inf'))
+        '''
+        这段代码是用于处理注意力机制中的注意力权重（weights）和注意力掩码（att_mask）的操作。让我们逐步分析每个部分的功能和作用：
+
+        if att_mask != None:：这是一个条件语句，用于检查是否存在注意力掩码。如果存在注意力掩码，则执行下面的操作；否则，跳过这段代码。
+
+        att_mask = (att_mask > 0).unsqueeze(1).repeat(1, att_mask.size(1), 1).unsqueeze(1)：这一行代码的作用是对注意力掩码进行处理。具体来说，它首先将注意力掩码中大于0的元素转换为布尔值（True/False），然后在第二个维度上增加一个维度，接着将其在第一个维度上重复att_mask.size(1)次，最后在第二个维度上再增加一个维度。这样的操作通常是为了与注意力权重进行相同维度的操作。
+
+        weights = weights.masked_fill(att_mask == 0, float('-inf'))：这一行代码的作用是根据注意力掩码对注意力权重进行填充。具体来说，它使用masked_fill函数，将注意力权重中对应位置注意力掩码为0的元素，填充为负无穷（float('-inf')）。这样的操作通常是为了在计算注意力分数时，将被掩码的位置的注意力权重置为负无穷，从而在softmax操作中得到接近于0的概率，达到忽略这些位置的效果。
+
+        综合起来，这段代码的功能是对注意力权重进行处理，根据注意力掩码将不需要考虑的位置的权重置为负无穷，以便在后续的注意力计算中忽略这些位置。
+        '''
+
 
         weights = F.softmax(weights, dim=-1)
         weights = self.dropout(weights)
